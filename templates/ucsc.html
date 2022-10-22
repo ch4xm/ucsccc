@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: arial, san-serif;
+    }
+
+    a:visited {
+      color: blue;
+    }
+
+    .favorite {
+      font-weight: bold;
+      background-color: purple;
+      color: white;
+    }
+
+    .matched {
+      background-color: aqua;
+    }
+
+    div.p {
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    ul.filter {
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+    ul.filter>* {
+      font-size: 0.8rem;
+      display: inline-block;
+      white-space: nowrap;
+    }
+    .date-item {
+      width: 110px;
+    }
+    .hall-item {
+      width: 135px;
+    }
+    .meal-item {
+      width: 90px;
+    }
+
+    #tree {
+      display: none;
+      border-left: 1px solid black;
+    }
+
+    #ignored-foods {
+      padding-left: 1rem;
+      list-style: none;
+      display: none;
+    }
+
+    #favorite-foods {
+      padding-left: 1rem;
+      list-style: none;
+      display: none;
+    }
+
+    ul.inner {
+      padding-left: 1rem;
+      list-style: none;
+    }
+    ul.leaf {
+      padding-left: 1rem;
+      list-style: none;
+    }
+
+    .r-date {
+      font-size: 1.5rem;
+      font-weight: bold;
+      border-right: 1px solid black;
+      padding-right: 0.5rem;
+      padding-left: 0.3rem;
+    }
+    .r-hall {
+      margin-top: 1rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+    .r-meal {
+      font-size: 1rem;
+    }
+    .r-cat {
+      font-weight: normal;
+      color: gray;
+    }
+    .r-food {
+      font-weight: normal;
+      color: black;
+      font-size: 0.8rem;
+    }
+  </style>
+<head>
+</head>
+<body>
+
+{% if error %}
+  <h1>Error. <a href="/">Go Home</a></h1>
+  <pre>{{ error }}</pre>
+{% else %}
+
+<div class="p">
+  Filter Dates:
+  <a href="#" onclick="return checkBoxes('date-item-checkbox', 1);">check all</a>
+  |
+  <a href="#" onclick="return checkBoxes('date-item-checkbox', 0);">uncheck all</a>
+  <ul class="filter">
+    {% for date in calendar %}
+      <li class="date-item">
+        <input type="checkbox" class="r-filter date-item-checkbox" id="date-{{ strftime(date.date, '%Y%m%d') }}" value="1">
+        <label for="date-{{ strftime(date.date, '%Y%m%d') }}">{{ strftime(date.date, '%a, %b %-d') }}</label>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="p">
+  Filter Dining Halls:
+  <a href="#" onclick="return checkBoxes('hall-item-checkbox', 1);">check all</a>
+  |
+  <a href="#" onclick="return checkBoxes('hall-item-checkbox', 0);">uncheck all</a>
+  <ul class="filter">
+    {% for hall in halls %}
+      <li class="hall-item">
+        <input type="checkbox" class="r-filter hall-item-checkbox" id="hall-{{ hall.code }}" value="1">
+        <label for="hall-{{ hall.code }}">{{ hall.name }}</label>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="p">
+  Filter Meals:
+  <a href="#" onclick="return checkBoxes('meal-item-checkbox', 1);">check all</a>
+  |
+  <a href="#" onclick="return checkBoxes('meal-item-checkbox', 0);">uncheck all</a>
+  <ul class="filter">
+    {% for m in all_meals %}
+      <li class="meal-item">
+        <input type="checkbox" class="r-filter meal-item-checkbox" id="{{ meals_lookup[m] }}" value="1">
+        <label for="{{ meals_lookup[m] }}">{{ m }}</label>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="p">
+  Favorite Foods: <span id="favorite-count"></span>
+  <a href="#" onclick="return toggle('favorite-foods', 1);" id="favorite-foods-show">show</a>
+  <a href="#" onclick="return toggle('favorite-foods', 0);" id="favorite-foods-hide" style="display: none;">hide</a>
+  <ul id="favorite-foods">
+  </ul>
+</div>
+
+<div class="p">
+  Ignored Foods: <span id="ignored-count"></span>
+  <a href="#" onclick="return toggle('ignored-foods', 1);" id="ignored-foods-show">show</a>
+  <a href="#" onclick="return toggle('ignored-foods', 0);" id="ignored-foods-hide" style="display: none;">hide</a>
+  <ul id="ignored-foods">
+  </ul>
+</div>
+
+<div class="p">
+  Search: <input type="text" id="r-search">
+</div>
+
+<div class="p">
+  <input type="checkbox" value="1" class="r-filter" id="favorites-only"><label for="favorites-only">Only display favorite foods</label>
+</div>
+
+<table class="root" id="tree">
+  <tr>
+    {% for date in calendar %}
+      <td valign="top" nowrap="1" cellpadding="0" cellspacing="0" class="r-date" data-checkbox="date-{{ strftime(date.date, '%Y%m%d') }}">
+        <label data-orig="{{ strftime(date.date, '%a, %b %-d') }}">
+          {{ strftime(date.date, '%a, %b %-d') }}
+        </label>
+        <ul class="inner">
+          {% for hall in date.halls %}
+            <li class="r-hall" data-checkbox="hall-{{ hall.code }}">
+              <label data-orig="{{ hall.name }}">
+                {{ hall.name }}
+              </label>
+              <ul class="inner">
+                {% for meal in hall.meals %}
+                  <li class="r-meal" data-checkbox="{{ meals_lookup[meal.meal] }}">
+                    <label data-orig="{{ meal.meal }}">{{ meal.meal }}</label>
+                    <ul class="inner">
+                      {% for cat in meal.cats %}
+                        <li class="r-cat">
+                          <label data-orig="{{ cat.cat }}">{{ cat.cat }}</label>
+                          <ul class="leaf">
+                            {% for food in cat.foods %}
+                              <li class="r-food"
+                                data-hall="{{ hall.name }}"
+                                data-meal="{{ meal.meal }}"
+                                data-cat="{{ cat.cat }}"
+                                data-food="{{ food }}"
+                              >
+                                <a href="#" onclick='return markFood({{ jsonify(food) }}, "skipped_foods");' style="text-decoration: none;" title="Hide">❌</a>
+                                <label data-orig="{{ food }}">{{ food }}</label>
+                                <a href="#" onclick='return markFood({{ jsonify(food) }}, "favorite_foods");' style="text-decoration: none;" title="Favorite">👍</a>
+                              </li>
+                            {% endfor %}
+                          </ul>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  </li>
+                {% endfor %}
+              </ul>
+            </li>
+          {% endfor %}
+        </ul>
+      </td>
+    {% endfor %}
+  </tr>
+</table>
+
+{% endif %}
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+<script>
+  var updateSearch = function(foo) {
+    var s = $('#r-search').val();
+    localStorage.setItem('search', s || '');
+
+    var allChecked = {};
+    $('input:checkbox').each(function () {
+      if (this.checked) {
+        allChecked[this.id] = 1;
+      }
+    });
+    localStorage.setItem('checkboxes', JSON.stringify(allChecked));
+
+    var skipped = JSON.parse(localStorage.getItem('skipped_foods') || "{}");
+    var favs = JSON.parse(localStorage.getItem('favorite_foods') || "{}");
+    var favs_only = $('#favorites-only').prop('checked');
+
+    $('.r-food').each(function(i, el) {
+      var name = $(el).data('hall') + '|' +
+        $(el).data('meal') + '|' +
+        $(el).data('cat') + '|' +
+        $(el).data('food');
+      if (skipped[$(el).data('food')] ||
+        (s.length > 0 && !name.match(new RegExp(s, 'i'))) ||
+        (favs_only && !favs[$(el).data('food')])
+      ) {
+        $(el).hide();
+      } else {
+        if (favs[$(el).data('food')]) {
+          $(el).children('label').addClass('favorite');
+        } else {
+          $(el).children('label').removeClass('favorite');
+        }
+
+        var orig = $(el).children('label').data('orig');
+        var replaced = orig;
+
+        if (s.length > 0) {
+          replaced = orig.replace(new RegExp(s, 'gi'), function(m) {
+            return '<span class="matched">' + m + '</span>'
+          });
+        }
+        $(el).children('label').html(replaced);
+
+        $(el).show();
+      }
+    });
+
+    $('.r-cat').each(function(i, el) {
+      var cnt = $(el).find('.r-food').filter(function() {
+        return $(this).css('display') !== 'none';
+      }).length;
+
+      if (cnt == 0) {
+        $(el).hide();
+      } else {
+        var orig = $(el).children('label').data('orig');
+        var replaced = orig;
+
+        if (s.length > 0) {
+          replaced = orig.replace(new RegExp(s, 'gi'), function(m) {
+            return '<span class="matched">' + m + '</span>'
+          });
+        }
+        $(el).children('label').html(replaced);
+
+        $(el).show();
+      }
+    });
+
+    $('.r-meal').each(function(i, el) {
+      var checkbox = $(el).data('checkbox');
+      var checked = $('#' + checkbox).is(":checked");
+      if (checked) {
+        var cnt = $(el).find('.r-cat').filter(function() {
+          return $(this).css('display') !== 'none';
+        }).length;
+
+        if (cnt == 0) {
+          $(el).hide();
+        } else {
+          var orig = $(el).children('label').data('orig');
+          var replaced = orig;
+
+          if (s.length > 0) {
+            replaced = orig.replace(new RegExp(s, 'gi'), function(m) {
+              return '<span class="matched">' + m + '</span>'
+            });
+          }
+          $(el).children('label').html(replaced);
+
+          $(el).show();
+        }
+      } else {
+        $(el).hide();
+      }
+    });
+
+    $('.r-hall').each(function(i, el) {
+      var checkbox = $(el).data('checkbox');
+      var checked = $('#' + checkbox).is(":checked");
+      if (checked) {
+        var cnt = $(el).find('.r-meal').filter(function() {
+          return $(this).css('display') !== 'none';
+        }).length;
+
+        if (cnt == 0) {
+          $(el).hide();
+        } else {
+          var orig = $(el).children('label').data('orig');
+          var replaced = orig;
+
+          if (s.length > 0) {
+            replaced = orig.replace(new RegExp(s, 'gi'), function(m) {
+              return '<span class="matched">' + m + '</span>'
+            });
+          }
+          $(el).children('label').html(replaced);
+
+          $(el).show();
+        }
+      } else {
+        $(el).hide();
+      }
+    });
+
+    $('.r-date').each(function(i, el) {
+      var checkbox = $(el).data('checkbox');
+      var checked = $('#' + checkbox).is(":checked");
+      if (checked) {
+        var cnt = $(el).find('.r-hall').filter(function() {
+          return $(this).css('display') !== 'none';
+        }).length;
+
+        if (cnt == 0) {
+          $(el).hide();
+        } else {
+          $(el).show();
+        }
+      } else {
+        $(el).hide();
+      }
+    });
+
+    updateMarked();
+  };
+
+  var checkBoxes = function(c, v) {
+    $('.' + c).prop('checked', v);
+    updateSearch();
+    return false;
+  };
+
+  var markFood = function(f, key) {
+    var marked = JSON.parse(localStorage.getItem(key) || "{}");
+    marked[f] = 1;
+    localStorage.setItem(key, JSON.stringify(marked));
+    updateSearch();
+    return false;
+  };
+
+  var markedList = function(key) {
+    var marked = JSON.parse(localStorage.getItem(key) || "{}");
+    return Object.keys(marked).sort();
+  };
+
+  var unmarkFood = function(key, i) {
+    var restore = markedList(key)[i];
+    var marked = JSON.parse(localStorage.getItem(key) || "{}");
+    delete(marked[restore]);
+    localStorage.setItem(key, JSON.stringify(marked));
+    updateSearch();
+    return false;
+  };
+
+  var updateMarked = function() {
+    var skip = markedList('skipped_foods');
+    $('#ignored-count').html(skip.length);
+
+    var html = '';
+    skip.forEach(function(food, i) {
+      html += '<li><a href="#" onclick=\'return unmarkFood("skipped_foods", ' + i + ');\' style="text-decoration: none;" title="Show">✅</a> ' + food + '</li>';
+    });
+    $('#ignored-foods').html(html);
+
+    var favs = markedList('favorite_foods');
+    $('#favorite-count').html(favs.length);
+
+    var html = '';
+    favs.forEach(function(food, i) {
+      html += '<li><a href="#" onclick=\'return unmarkFood("favorite_foods", ' + i + ');\' style="text-decoration: none;" title="Unfavorite">❌</a> ' + food + '</li>';
+    });
+    $('#favorite-foods').html(html);
+  };
+
+  var toggle = function(key, show) {
+    if (show) {
+      $('#' + key).show();
+      $('#' + key + '-hide').show();
+      $('#' + key + '-show').hide();
+    } else {
+      $('#' + key).hide();
+      $('#' + key + '-hide').hide();
+      $('#' + key + '-show').show();
+    }
+
+    return false;
+  };
+
+  $(document).ready(function() {
+    $('#r-search').val(localStorage.getItem('search') || '');
+
+    var allChecked = JSON.parse(localStorage.getItem('checkboxes') || "{}");
+    var checked = Object.keys(allChecked);
+    if (checked.length == 0) {
+      $('input:checkbox').prop('checked', 1);
+    } else {
+      checked.forEach(function(k) {
+        $('#' + k).prop('checked', 1);
+      });
+    }
+
+    $('#r-search').on('keyup', updateSearch);
+    $('.r-filter').on('change', updateSearch);
+    updateSearch();
+    $('#tree').show();
+  });
+</script>
+
+</body>
+</html>

@@ -1,9 +1,8 @@
-from flask import Flask, render_template
+from ucsc import ucsc
+
+from flask import Flask
+from flask_compress import Compress
 
 app = Flask(__name__)
-
-@app.route('/')
-@app.route('/<name>')
-def hello(name=None):
-    return render_template('hello.html', name=name)
-
+Compress(app)
+app.register_blueprint(ucsc)
