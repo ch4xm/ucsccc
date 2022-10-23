@@ -8,6 +8,7 @@ import time
 import traceback
 
 from css_html_js_minify import html_minify
+from flask import abort
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
@@ -16,12 +17,27 @@ from pytz import timezone
 CURL_CACHING = False
 CACHE_AGE = 120
 
-HALLS = [
-    {'code': '40', 'name': 'JRLC/College 9', 'bgcolor': 'lightcyan'},
-    {'code': '25', 'name': 'Porter/Kresge', 'bgcolor': 'papayawhip'},
-    {'code': '05', 'name': 'Cowell/Stevenson', 'bgcolor': 'lavenderblush'},
-    {'code': '20', 'name': 'Crown/Merrill', 'bgcolor': 'beige'},
-]
+HALLS = [{
+    'name': 'College Nine/John R Lewis',
+    'code': '40',
+    'bgcolor': 'lightcyan',
+    'hours_url': '/hours/college-nine-john-r-lewis',
+}, {
+    'name': 'Porter/Kresge',
+    'code': '25',
+    'bgcolor': 'papayawhip',
+    'hours_url': '/hours/porter-kresge',
+}, {
+    'name': 'Cowell/Stevenson',
+    'code': '05',
+    'bgcolor': 'lavenderblush',
+    'hours_url': '/hours/cowell-stevenson',
+}, {
+    'name': 'Crown/Merrill',
+    'code': '20',
+    'bgcolor': 'beige',
+    'hours_url': '/hours/crown-merrill',
+}]
 
 def render(template, **params):
     html = render_template(template, **params)
@@ -134,6 +150,7 @@ def gethall(hall, date):
             'name': hall['name'],
             'code': hall['code'],
             'bgcolor': hall['bgcolor'],
+            'hours_url': hall['hours_url'],
             'meals': meals,
         }
 
@@ -261,6 +278,33 @@ def fullcrawl(print_output = None):
         gethalls(date)
 
     return redirect('/')
+
+HOURS_LOOKUP = {
+    'college-nine-john-r-lewis': 'nineten',
+    'porter-kresge': 'porterdh',
+    'cowell-stevenson': 'csdh',
+    'crown-merrill': 'cmdh',
+}
+
+@ucsc.route('/hours', methods = ['GET'])
+@ucsc.route('/hours/<key>', methods = ['GET'])
+def hours(key = None):
+    if not key:
+        key = 'nineten|porterdh|cmdh|csdh'
+    elif key not in HOURS_LOOKUP:
+        return abort(404)
+    else:
+        key = HOURS_LOOKUP[key]
+
+    response = requests.get('https://dining.ucsc.edu/eat/')
+    html = response.content.decode('utf8')
+    html = re.sub('display: block', 'display: table', html)
+    html = re.sub('display: none', 'display: block', html)
+    html = re.sub('<p>(\*.*?)</p>', r'<p class="footnote">\1</p>', html)
+
+    halls = re.findall(f'(?s)<div id="(?:{key})".*?<p class="footnote">.*?</p>', html)
+
+    return render('hours.html', halls_html = halls)
 
 def main():
     try:

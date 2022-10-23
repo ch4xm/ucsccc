@@ -23,8 +23,12 @@
     }
 
     .cache-age,.cache-age:visited {
-        text-decoration: none;
         color: lightgray;
+        font-size: 0.8rem;
+        font-weight: normal;
+    }
+
+    .hours-url,.hours-url:visited {
         font-size: 0.8rem;
         font-weight: normal;
     }
@@ -48,7 +52,7 @@
       width: 110px;
     }
     .hall-item {
-      width: 135px;
+      width: 185px;
     }
     .meal-item {
       width: 90px;
@@ -199,6 +203,7 @@
               <label data-orig="{{ hall.name }}">
                 {{ hall.name }}
               </label>
+              <a class="hours-url" href="{{ hall.hours_url }}">Hours</a>
               <ul class="inner">
                 {% for meal in hall.meals %}
                   <li class="r-meal" data-checkbox="{{ meals_lookup[meal.meal] }}">
@@ -234,8 +239,6 @@
     {% endfor %}
   </tr>
 </table>
-
-{% endif %}
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
 <script>
@@ -468,5 +471,8 @@
   });
 </script>
 
+{% endif %}
+
+{% include 'footer.html' %}
 </body>
 </html>

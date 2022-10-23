@@ -1,0 +1,45 @@
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: arial, san-serif;
+    }
+    h1 {
+      font-size: 1.2rem;
+    }
+    th {
+      border-bottom: 1px solid black;
+    }
+    td {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+    p {
+      margin-bottom: 0;
+    }
+    ul {
+      margin-top: 0;
+    }
+    li {
+      font-size: 0.8rem;
+    }
+    .footnote {
+      font-size: 0.8rem;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <a href="/">Home</a>
+  |
+  <a href="/hours">All Dining Hall Hours</a>
+  {% for html in halls_html %}
+    {{ html | safe }}
+    {% if not loop.last %}
+      <hr style="height: 1px; background-color: black; border: 0; margin: 1rem;">
+    {% endif %}
+  {% endfor %}
+  {% include 'footer.html' %}
+</body>
+</html>
