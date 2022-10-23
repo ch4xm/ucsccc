@@ -9,11 +9,12 @@ import traceback
 
 from css_html_js_minify import html_minify
 from flask import Blueprint
+from flask import redirect
 from flask import render_template
 from pytz import timezone
 
 CURL_CACHING = False
-CACHE_AGE = 900
+CACHE_AGE = 2
 
 HALLS = [
     {'code': '40', 'name': 'JRLC/College 9', 'bgcolor': 'lightcyan'},
@@ -31,6 +32,18 @@ def render(template, **params):
         html = html_minify(html)
 
     return html
+
+def cache_age(c):
+    age = time.time() - c
+    if age < 2:
+        return 'just now'
+    if age < 60 * 1.5:
+        return f'{age:.0f} seconds ago'
+    if age < 60 * 90:
+        return f'{age / 60:.0f} minutes ago'
+    if age < 60 * 60 * 24:
+        return f'{age / 3660:.1f} hours ago'
+    return 'more than a day ago'
 
 def jsonify(val):
     return json.dumps(val)
@@ -154,6 +167,7 @@ def getcalendar():
         calendar.append({
             'date': datetime.datetime.strptime(date, '%Y-%m-%d'),
             'halls': cache[date]['halls'],
+            'time': cache[date]['time'],
         })
 
     return calendar
@@ -233,22 +247,20 @@ def ucscRoute():
         halls = HALLS,
         strftime = strftime,
         jsonify = jsonify,
+        cache_age = cache_age,
     )
 
 @ucsc.route('/fullcrawl', methods = ['GET'])
 def fullcrawl(print_output = None):
     today = datetime.datetime.now()
     today = today.astimezone(timezone('US/Pacific')).date()
-    html = ''
     for i in range(0, 8):
         date = today + datetime.timedelta(days = i)
         if print_output:
             print(date)
-        else:
-            html += f'Crawled {date}<br>'
         gethalls(date)
 
-    return html
+    return redirect('/')
 
 def main():
     try:
