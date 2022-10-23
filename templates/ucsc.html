@@ -129,73 +129,83 @@
   <pre>{{ error }}</pre>
 {% else %}
 
-<div class="p">
-  Filter Dates:
-  <a href="#" onclick="return checkBoxes('date-item-checkbox', 1);">check all</a>
-  |
-  <a href="#" onclick="return checkBoxes('date-item-checkbox', 0);">uncheck all</a>
-  <ul class="filter">
-    {% for date in calendar %}
-      <li class="date-item">
-        <input type="checkbox" checked="1" class="r-filter date-item-checkbox" id="date-{{ strftime(date.date, '%Y%m%d') }}" value="1">
-        <label for="date-{{ strftime(date.date, '%Y%m%d') }}">{{ strftime(date.date, '%a, %b %-d') }}</label>
-      </li>
-    {% endfor %}
-  </ul>
+<div class="p" id="filters-show">
+  <a href="#" onclick="return toggle('filters', 1);">Show Filters</a>
 </div>
 
-<div class="p">
-  Filter Dining Halls:
-  <a href="#" onclick="return checkBoxes('hall-item-checkbox', 1);">check all</a>
-  |
-  <a href="#" onclick="return checkBoxes('hall-item-checkbox', 0);">uncheck all</a>
-  <ul class="filter">
-    {% for hall in halls %}
-      <li class="hall-item" style="background-color: {{ hall.bgcolor }};">
-        <input type="checkbox" checked="1" class="r-filter hall-item-checkbox" id="hall-{{ hall.code }}" value="1">
-        <label for="hall-{{ hall.code }}">{{ hall.name }}</label>
-      </li>
-    {% endfor %}
-  </ul>
-</div>
+<div id="filters-hide" style="display: none;">
+  <div class="p">
+    <a href="#" onclick="return toggle('filters', 0);">Hide Filters</a>
+  </div>
 
-<div class="p">
-  Filter Meals:
-  <a href="#" onclick="return checkBoxes('meal-item-checkbox', 1);">check all</a>
-  |
-  <a href="#" onclick="return checkBoxes('meal-item-checkbox', 0);">uncheck all</a>
-  <ul class="filter">
-    {% for m in all_meals %}
-      <li class="meal-item">
-        <input type="checkbox" checked="1" class="r-filter meal-item-checkbox" id="{{ meals_lookup[m] }}" value="1">
-        <label for="{{ meals_lookup[m] }}">{{ m }}</label>
-      </li>
-    {% endfor %}
-  </ul>
-</div>
+  <div class="p">
+    Filter Dates:
+    <a href="#" onclick="return checkBoxes('date-item-checkbox', 1);">check all</a>
+    |
+    <a href="#" onclick="return checkBoxes('date-item-checkbox', 0);">uncheck all</a>
+    <ul class="filter">
+      {% for date in calendar %}
+        <li class="date-item">
+          <input type="checkbox" checked="1" class="r-filter date-item-checkbox" id="date-{{ strftime(date.date, '%Y%m%d') }}" value="1">
+          <label for="date-{{ strftime(date.date, '%Y%m%d') }}">{{ strftime(date.date, '%a, %b %-d') }}</label>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
 
-<div class="p">
-  👍 <span class="favorite">Favorite</span> Foods: <span id="favorite-count"></span>
-  <a href="#" onclick="return toggle('favorite-foods', 1);" id="favorite-foods-show">show</a>
-  <a href="#" onclick="return toggle('favorite-foods', 0);" id="favorite-foods-hide" style="display: none;">hide</a>
-  <ul id="favorite-foods">
-  </ul>
-</div>
+  <div class="p">
+    Filter Dining Halls:
+    <a href="#" onclick="return checkBoxes('hall-item-checkbox', 1);">check all</a>
+    |
+    <a href="#" onclick="return checkBoxes('hall-item-checkbox', 0);">uncheck all</a>
+    <ul class="filter">
+      {% for hall in halls %}
+        <li class="hall-item" style="background-color: {{ hall.bgcolor }};">
+          <input type="checkbox" checked="1" class="r-filter hall-item-checkbox" id="hall-{{ hall.code }}" value="1">
+          <label for="hall-{{ hall.code }}">{{ hall.name }}</label>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
 
-<div class="p">
-  ❌ Ignored Foods: <span id="ignored-count"></span>
-  <a href="#" onclick="return toggle('ignored-foods', 1);" id="ignored-foods-show">show</a>
-  <a href="#" onclick="return toggle('ignored-foods', 0);" id="ignored-foods-hide" style="display: none;">hide</a>
-  <ul id="ignored-foods">
-  </ul>
-</div>
+  <div class="p">
+    Filter Meals:
+    <a href="#" onclick="return checkBoxes('meal-item-checkbox', 1);">check all</a>
+    |
+    <a href="#" onclick="return checkBoxes('meal-item-checkbox', 0);">uncheck all</a>
+    <ul class="filter">
+      {% for m in all_meals %}
+        <li class="meal-item">
+          <input type="checkbox" checked="1" class="r-filter meal-item-checkbox" id="{{ meals_lookup[m] }}" value="1">
+          <label for="{{ meals_lookup[m] }}">{{ m }}</label>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
 
-<div class="p">
-  Search: <input type="text" id="r-search">
-</div>
+  <div class="p">
+    ❌ Ignored Foods: <span id="ignored-count"></span>
+    <a href="#" onclick="return toggle('ignored-foods', 1);" id="ignored-foods-show">show</a>
+    <a href="#" onclick="return toggle('ignored-foods', 0);" id="ignored-foods-hide" style="display: none;">hide</a>
+    <ul id="ignored-foods">
+    </ul>
+  </div>
 
-<div class="p">
-  <input type="checkbox" value="1" class="r-filter" id="favorites-only"><label for="favorites-only">Only display favorite foods</label>
+  <div class="p">
+    👍 <span class="favorite">Favorite</span> Foods: <span id="favorite-count"></span>
+    <a href="#" onclick="return toggle('favorite-foods', 1);" id="favorite-foods-show">show</a>
+    <a href="#" onclick="return toggle('favorite-foods', 0);" id="favorite-foods-hide" style="display: none;">hide</a>
+    <ul id="favorite-foods">
+    </ul>
+  </div>
+
+  <div class="p">
+    <input type="checkbox" value="1" class="r-filter" id="favorites-only"><label for="favorites-only">Only display favorite foods</label>
+  </div>
+
+  <div class="p">
+    Search: <input type="text" id="r-search">
+  </div>
 </div>
 
 <table id="tree">
