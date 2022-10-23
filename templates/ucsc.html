@@ -22,12 +22,6 @@
       color: black;
     }
 
-    .cache-age,.cache-age:visited {
-        color: lightgray;
-        font-size: 0.8rem;
-        font-weight: normal;
-    }
-
     .hours-url,.hours-url:visited {
         font-size: 0.8rem;
         font-weight: normal;
@@ -196,7 +190,6 @@
         <label data-orig="{{ strftime(date.date, '%a, %b %-d') }}">
           {{ strftime(date.date, '%a, %b %-d') }}
         </label>
-        <a href="/fullcrawl" class="cache-age" title="Reload">(Loaded {{ cache_age(date.time) }})</a>
         <ul class="inner">
           {% for hall in date.halls %}
             <li class="r-hall" data-checkbox="hall-{{ hall.code }}" style="background-color: {{ hall.bgcolor }};">

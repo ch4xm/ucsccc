@@ -177,50 +177,6 @@ def getcache():
     cache = json.loads(cache)
     return cache
 
-def getcalendar():
-    cache = getcache()
-    calendar = []
-    for date in sorted(list(cache)):
-        calendar.append({
-            'date': datetime.datetime.strptime(date, '%Y-%m-%d'),
-            'halls': cache[date]['halls'],
-            'time': cache[date]['time'],
-        })
-
-    return calendar
-
-def gethalls(date):
-    cache = getcache()
-
-    key = date.strftime('%Y-%m-%d')
-    if cache.get(key):
-        age = time.time() - cache[key]['time']
-        if age < CACHE_AGE:
-            return cache[key]['halls']
-
-    halls = []
-    for hall in HALLS:
-        h = gethall(hall, date)
-        if h:
-            halls += [h]
-
-    cache[key] = {
-        'time': time.time(),
-        'halls': halls,
-    }
-
-    to_clean = []
-    for k in cache:
-        age = time.time() - cache[k]['time']
-        if age >= CACHE_AGE:
-            to_clean.append(k)
-    for k in to_clean:
-        del(cache[k])
-
-    ucsc_halls_json(json.dumps(cache))
-
-    return halls
-
 def get_all_meals(calendar):
     meals = set()
     for d in calendar:
@@ -248,34 +204,67 @@ ucsc = Blueprint('ucsc', __name__)
 @ucsc.route('/', methods = ['GET'])
 def ucscRoute():
     try:
-        calendar = getcalendar()
+        cache = getcache()
+        calendar = []
+        for date in sorted(list(cache['dates'])):
+            calendar.append({
+                'date': datetime.datetime.strptime(date, '%Y-%m-%d'),
+                'halls': cache['dates'][date]['halls'],
+            })
+
+        (all_meals, meals_lookup) = get_all_meals(calendar)
+
+        return render('ucsc.html',
+            calendar = calendar,
+            all_meals = all_meals,
+            meals_lookup = meals_lookup,
+            halls = HALLS,
+            cache_time = cache['time'],
+            strftime = strftime,
+            jsonify = jsonify,
+            cache_age = cache_age,
+        )
 
     except BaseException as e:
         error = repr(e) + '\n\n'
         error += traceback.format_exc()
         return render('ucsc.html', error = error)
 
-    (all_meals, meals_lookup) = get_all_meals(calendar)
-
-    return render('ucsc.html',
-        calendar = calendar,
-        all_meals = all_meals,
-        meals_lookup = meals_lookup,
-        halls = HALLS,
-        strftime = strftime,
-        jsonify = jsonify,
-        cache_age = cache_age,
-    )
-
 @ucsc.route('/fullcrawl', methods = ['GET'])
 def fullcrawl(print_output = None):
-    today = datetime.datetime.now()
-    today = today.astimezone(timezone('US/Pacific')).date()
+    cache = getcache()
+
+    age = cache.get('time') or 0
+    age = time.time() - age
+    if age < CACHE_AGE:
+        if print_output:
+            print('Cache is fresh')
+
+        return redirect('/')
+
+    cache = {
+        'dates': {}
+    }
+
+    today = datetime.datetime.now().astimezone(timezone('US/Pacific')).date()
     for i in range(0, 8):
         date = today + datetime.timedelta(days = i)
+        date_key = date.strftime('%Y-%m-%d')
         if print_output:
-            print(date)
-        gethalls(date)
+            print(date_key)
+
+        halls = []
+        for hall in HALLS:
+            h = gethall(hall, date)
+            if h:
+                halls += [h]
+
+        cache['dates'][date_key] = {
+            'halls': halls,
+        }
+
+    cache['time'] = time.time()
+    ucsc_halls_json(json.dumps(cache))
 
     return redirect('/')
 
