@@ -2,6 +2,7 @@ import datetime
 import json
 import os
 import re
+import requests
 import subprocess
 import time
 import traceback
@@ -41,13 +42,19 @@ def curly(url, code, date):
     file = f'/tmp/ucsc-output-{date}-{code}.html'
 
     if not (CURL_CACHING and os.path.exists(file)):
-        args = [
-            'curl', '-s', url,
-            '-H', 'Cookie: WebInaCartLocation=; WebInaCartDates=; WebInaCartMeals=; WebInaCartRecipes=; WebInaCartQtys=',
-            '-o', file
-        ]
-        proc = subprocess.Popen(args, stdout=subprocess.PIPE)
-        proc.wait()
+        cookies = {
+            'WebInaCartLocation': '',
+            'WebInaCartDates': '',
+            'WebInaCartMeals': '',
+            'WebInaCartRecipes': '',
+            'WebInaCartQtys': '',
+        }
+
+        response = requests.get(url, cookies = cookies)
+
+        f = open(file, 'wb')
+        f.write(response.content)
+        f.close()
 
     f = open(file)
     result = f.read()
@@ -228,20 +235,23 @@ def ucscRoute():
     )
 
 @ucsc.route('/fullcrawl', methods = ['GET'])
-def fullcrawl():
+def fullcrawl(print_output = None):
     today = datetime.datetime.now()
     today = today.astimezone(timezone('US/Pacific')).date()
     html = ''
     for i in range(0, 8):
         date = today + datetime.timedelta(days = i)
-        html += f'Crawling {date}<br>'
+        if print_output:
+            print(date)
+        else:
+            html += f'Crawled {date}<br>'
         gethalls(date)
 
     return html
 
 def main():
     try:
-        fullcrawl()
+        fullcrawl('PRINT_OUTPUT')
 
     except BaseException as e:
         print('UCSC Job Failed')
