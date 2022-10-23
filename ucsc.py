@@ -14,7 +14,7 @@ from flask import render_template
 from pytz import timezone
 
 CURL_CACHING = False
-CACHE_AGE = 2
+CACHE_AGE = 120
 
 HALLS = [
     {'code': '40', 'name': 'JRLC/College 9', 'bgcolor': 'lightcyan'},
