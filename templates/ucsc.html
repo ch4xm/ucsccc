@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>UCSC Dining Hall Menus</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
@@ -20,6 +22,19 @@
     .matched {
       background-color: aqua;
       color: black;
+    }
+
+    .unmark {
+      text-decoration: none;
+      border: 0.5px solid blue;
+      font-size: 0.6rem;
+      padding-top: 0.1rem;
+      padding-bottom: 0.1rem;
+      padding-left: 0.3rem;
+      padding-right: 0.3rem;
+      border-radius: 0.6rem;
+      position: relative;
+      top: -0.1rem;
     }
 
     .hours-url,.hours-url:visited {
@@ -105,7 +120,6 @@
       font-size: 0.8rem;
     }
   </style>
-<head>
 </head>
 <body>
 {% include 'header.html' %}
@@ -161,7 +175,7 @@
 </div>
 
 <div class="p">
-  Favorite Foods: <span id="favorite-count"></span>
+  👍 <span class="favorite">Favorite</span> Foods: <span id="favorite-count"></span>
   <a href="#" onclick="return toggle('favorite-foods', 1);" id="favorite-foods-show">show</a>
   <a href="#" onclick="return toggle('favorite-foods', 0);" id="favorite-foods-hide" style="display: none;">hide</a>
   <ul id="favorite-foods">
@@ -169,7 +183,7 @@
 </div>
 
 <div class="p">
-  Ignored Foods: <span id="ignored-count"></span>
+  ❌ Ignored Foods: <span id="ignored-count"></span>
   <a href="#" onclick="return toggle('ignored-foods', 1);" id="ignored-foods-show">show</a>
   <a href="#" onclick="return toggle('ignored-foods', 0);" id="ignored-foods-hide" style="display: none;">hide</a>
   <ul id="ignored-foods">
@@ -418,7 +432,7 @@
 
     var html = '';
     skip.forEach(function(food, i) {
-      html += '<li><a href="#" onclick=\'return unmarkFood("skipped_foods", ' + i + ');\' style="text-decoration: none;" title="Show">✅</a> ' + food + '</li>';
+      html += '<li><a href="#" onclick=\'return unmarkFood("skipped_foods", ' + i + ');\' class="unmark">show</a> ' + food + '</li>';
     });
     $('#ignored-foods').html(html);
 
@@ -427,7 +441,7 @@
 
     var html = '';
     favs.forEach(function(food, i) {
-      html += '<li><a href="#" onclick=\'return unmarkFood("favorite_foods", ' + i + ');\' style="text-decoration: none;" title="Unfavorite">❌</a> ' + food + '</li>';
+      html += '<li><a href="#" onclick=\'return unmarkFood("favorite_foods", ' + i + ');\' class="unmark">unfavorite</a> ' + food + '</li>';
     });
     $('#favorite-foods').html(html);
   };
