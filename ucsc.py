@@ -119,7 +119,20 @@ def gethall(hall, date):
     return None
 
 def ucsc_halls_json(val = None):
-    return '{}'
+    if val:
+        f = open('/tmp/ucsc-cache.json', 'w')
+        f.write(val)
+        f.close()
+
+    else:
+        try:
+            f = open('/tmp/ucsc-cache.json')
+            val = f.read()
+            f.close()
+        except:
+            val = ''
+
+    return val or '{}'
 
 def getcache():
     cache = ucsc_halls_json()
@@ -221,3 +234,15 @@ def ucscRoute():
         strftime = strftime,
         jsonify = jsonify,
     )
+
+def main():
+    try:
+        fullcrawl()
+
+    except BaseException as e:
+        print('UCSC Job Failed')
+        print(repr(e))
+        print(traceback.format_exc())
+
+if __name__ == '__main__':
+    main()
