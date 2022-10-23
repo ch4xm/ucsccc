@@ -16,10 +16,10 @@ CURL_CACHING = False
 CACHE_AGE = 900
 
 HALLS = [
-    {'code': '40', 'name': 'JRLC/College 9'},
-    {'code': '25', 'name': 'Porter/Kresge'},
-    {'code': '05', 'name': 'Cowell/Stevenson'},
-    {'code': '20', 'name': 'Crown/Merrill'},
+    {'code': '40', 'name': 'JRLC/College 9', 'bgcolor': 'lightcyan'},
+    {'code': '25', 'name': 'Porter/Kresge', 'bgcolor': 'papayawhip'},
+    {'code': '05', 'name': 'Cowell/Stevenson', 'bgcolor': 'lavenderblush'},
+    {'code': '20', 'name': 'Crown/Merrill', 'bgcolor': 'beige'},
 ]
 
 def render(template, **params):
@@ -120,6 +120,7 @@ def gethall(hall, date):
         return {
             'name': hall['name'],
             'code': hall['code'],
+            'bgcolor': hall['bgcolor'],
             'meals': meals,
         }
 

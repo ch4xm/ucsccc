@@ -18,6 +18,7 @@
 
     .matched {
       background-color: aqua;
+      color: black;
     }
 
     div.p {
@@ -65,6 +66,8 @@
     ul.inner {
       padding-left: 1rem;
       list-style: none;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
     }
     ul.leaf {
       padding-left: 1rem;
@@ -79,9 +82,10 @@
       padding-left: 0.3rem;
     }
     .r-hall {
-      margin-top: 1rem;
+      margin-top: 0.5rem;
       font-size: 1.2rem;
       font-weight: bold;
+      padding: 0.25rem;
     }
     .r-meal {
       font-size: 1rem;
@@ -127,7 +131,7 @@
   <a href="#" onclick="return checkBoxes('hall-item-checkbox', 0);">uncheck all</a>
   <ul class="filter">
     {% for hall in halls %}
-      <li class="hall-item">
+      <li class="hall-item" style="background-color: {{ hall.bgcolor }};">
         <input type="checkbox" class="r-filter hall-item-checkbox" id="hall-{{ hall.code }}" value="1">
         <label for="hall-{{ hall.code }}">{{ hall.name }}</label>
       </li>
@@ -183,7 +187,7 @@
         </label>
         <ul class="inner">
           {% for hall in date.halls %}
-            <li class="r-hall" data-checkbox="hall-{{ hall.code }}">
+            <li class="r-hall" data-checkbox="hall-{{ hall.code }}" style="background-color: {{ hall.bgcolor }};">
               <label data-orig="{{ hall.name }}">
                 {{ hall.name }}
               </label>
