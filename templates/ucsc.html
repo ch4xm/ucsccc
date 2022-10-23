@@ -67,6 +67,22 @@
       width: 90px;
     }
 
+    #scrollbox-container {
+      position: relative;
+    }
+    #scrollbox-arrow-placement {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+    }
+    #scrollbox-arrow {
+      position: sticky;
+      top: 0;
+    }
+    #scrollbox {
+      overflow-x: scroll;
+    }
     #tree {
       border-left: 1px solid black;
     }
@@ -208,55 +224,64 @@
   </div>
 </div>
 
-<table id="tree">
-  <tr>
-    {% for date in calendar %}
-      <td valign="top" nowrap="1" cellpadding="0" cellspacing="0" class="r-date" data-checkbox="date-{{ strftime(date.date, '%Y%m%d') }}">
-        <label data-orig="{{ strftime(date.date, '%a, %b %-d') }}">
-          {{ strftime(date.date, '%a, %b %-d') }}
-        </label>
-        <ul class="inner">
-          {% for hall in date.halls %}
-            <li class="r-hall" data-checkbox="hall-{{ hall.code }}" style="background-color: {{ hall.bgcolor }};">
-              <label data-orig="{{ hall.name }}">
-                {{ hall.name }}
-              </label>
-              <a class="hours-url" href="{{ hall.hours_url }}">Hours</a>
-              <ul class="inner">
-                {% for meal in hall.meals %}
-                  <li class="r-meal" data-checkbox="{{ meals_lookup[meal.meal] }}">
-                    <label data-orig="{{ meal.meal }}">{{ meal.meal }}</label>
-                    <ul class="inner">
-                      {% for cat in meal.cats %}
-                        <li class="r-cat">
-                          <label data-orig="{{ cat.cat }}">{{ cat.cat }}</label>
-                          <ul class="leaf">
-                            {% for food in cat.foods %}
-                              <li class="r-food"
-                                data-hall="{{ hall.name }}"
-                                data-meal="{{ meal.meal }}"
-                                data-cat="{{ cat.cat }}"
-                                data-food="{{ food }}"
-                              >
-                                <a href="#" onclick='return markFood({{ jsonify(food) }}, "skipped_foods");' style="text-decoration: none;" title="Hide">❌</a>
-                                <label data-orig="{{ food }}">{{ food }}</label>
-                                <a href="#" onclick='return markFood({{ jsonify(food) }}, "favorite_foods");' style="text-decoration: none;" title="Favorite">👍</a>
-                              </li>
-                            {% endfor %}
-                          </ul>
-                        </li>
-                      {% endfor %}
-                    </ul>
-                  </li>
-                {% endfor %}
-              </ul>
-            </li>
-          {% endfor %}
-        </ul>
-      </td>
-    {% endfor %}
-  </tr>
-</table>
+<div id="scrollbox-container">
+  <div id="scrollbox-arrow-placement">
+    <div id="scrollbox-arrow">
+      ➡️
+    </div>
+  </div>
+  <div id="scrollbox">
+    <table id="tree">
+      <tr>
+        {% for date in calendar %}
+          <td valign="top" nowrap="1" cellpadding="0" cellspacing="0" class="r-date" data-checkbox="date-{{ strftime(date.date, '%Y%m%d') }}">
+            <label data-orig="{{ strftime(date.date, '%a, %b %-d') }}">
+              {{ strftime(date.date, '%a, %b %-d') }}
+            </label>
+            <ul class="inner">
+              {% for hall in date.halls %}
+                <li class="r-hall" data-checkbox="hall-{{ hall.code }}" style="background-color: {{ hall.bgcolor }};">
+                  <label data-orig="{{ hall.name }}">
+                    {{ hall.name }}
+                  </label>
+                  <a class="hours-url" href="{{ hall.hours_url }}">Hours</a>
+                  <ul class="inner">
+                    {% for meal in hall.meals %}
+                      <li class="r-meal" data-checkbox="{{ meals_lookup[meal.meal] }}">
+                        <label data-orig="{{ meal.meal }}">{{ meal.meal }}</label>
+                        <ul class="inner">
+                          {% for cat in meal.cats %}
+                            <li class="r-cat">
+                              <label data-orig="{{ cat.cat }}">{{ cat.cat }}</label>
+                              <ul class="leaf">
+                                {% for food in cat.foods %}
+                                  <li class="r-food"
+                                    data-hall="{{ hall.name }}"
+                                    data-meal="{{ meal.meal }}"
+                                    data-cat="{{ cat.cat }}"
+                                    data-food="{{ food }}"
+                                  >
+                                    <a href="#" onclick='return markFood({{ jsonify(food) }}, "skipped_foods");' style="text-decoration: none;" title="Hide">❌</a>
+                                    <label data-orig="{{ food }}">{{ food }}</label>
+                                    <a href="#" onclick='return markFood({{ jsonify(food) }}, "favorite_foods");' style="text-decoration: none;" title="Favorite">👍</a>
+                                  </li>
+                                {% endfor %}
+                              </ul>
+                            </li>
+                          {% endfor %}
+                        </ul>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                </li>
+              {% endfor %}
+            </ul>
+          </td>
+        {% endfor %}
+      </tr>
+    </table>
+  </div>
+</div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
 <script>
@@ -406,6 +431,7 @@
     });
 
     updateMarked();
+    scrolling();
   };
 
   var checkBoxes = function(c, v) {
@@ -470,6 +496,23 @@
     return false;
   };
 
+  var scrolling = function() {
+    var hiddenPixels = $('#scrollbox')[0].scrollWidth - $('#scrollbox')[0].clientWidth;
+    var fadePixels = $('#scrollbox')[0].clientWidth / 2;
+    if (hiddenPixels < 0) {
+      hiddenPixels = 0;
+    } else if (hiddenPixels > fadePixels) {
+      hiddenPixels = fadePixels;
+    }
+
+    if ($('#scrollbox').scrollLeft() >= hiddenPixels) {
+      $('#scrollbox-arrow').css('opacity', '0.0');
+    } else {
+      var opacity = 1.0 - $('#scrollbox').scrollLeft() / hiddenPixels;
+      $('#scrollbox-arrow').css('opacity', opacity);
+    }
+  };
+
   $(document).ready(function() {
     $('#r-search').val(localStorage.getItem('search') || '');
 
@@ -484,8 +527,10 @@
 
     $('#r-search').on('keyup', updateSearch);
     $('.r-filter').on('change', updateSearch);
+    $('#scrollbox').on('scroll', scrolling);
     updateSearch();
     $('body').show();
+    scrolling();
   });
 </script>
 
