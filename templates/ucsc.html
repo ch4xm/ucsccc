@@ -513,6 +513,11 @@
     }
   };
 
+  var forceScroll = function() {
+    var fadePixels = $('#scrollbox')[0].clientWidth / 2;
+    $('#scrollbox').animate({scrollLeft: fadePixels}, 500);
+  };
+
   $(document).ready(function() {
     $('#r-search').val(localStorage.getItem('search') || '');
 
@@ -528,6 +533,7 @@
     $('#r-search').on('keyup', updateSearch);
     $('.r-filter').on('change', updateSearch);
     $('#scrollbox').on('scroll', scrolling);
+    $('#scrollbox-arrow').on('click', forceScroll);
     updateSearch();
     $('body').show();
     scrolling();
