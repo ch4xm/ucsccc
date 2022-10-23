@@ -205,14 +205,6 @@ def get_all_meals(calendar):
 
     return (all_meals, meals_lookup)
 
-def fullcrawl():
-    today = datetime.datetime.now()
-    today = today.astimezone(timezone('US/Pacific')).date()
-    for i in range(0, 8):
-        date = today + datetime.timedelta(days = i)
-        print(f'Crawling {date}')
-        gethalls(date)
-
 ucsc = Blueprint('ucsc', __name__)
 @ucsc.route('/', methods = ['GET'])
 def ucscRoute():
@@ -234,6 +226,18 @@ def ucscRoute():
         strftime = strftime,
         jsonify = jsonify,
     )
+
+@ucsc.route('/fullcrawl', methods = ['GET'])
+def fullcrawl():
+    today = datetime.datetime.now()
+    today = today.astimezone(timezone('US/Pacific')).date()
+    html = ''
+    for i in range(0, 8):
+        date = today + datetime.timedelta(days = i)
+        html += f'Crawling {date}<br>'
+        gethalls(date)
+
+    return html
 
 def main():
     try:
