@@ -1,9 +1,13 @@
+<!DOCTYPE html>
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
       font-family: arial, san-serif;
+    }
+    a:visited {
+      color: blue;
     }
     h1 {
       font-size: 1.2rem;
@@ -31,8 +35,7 @@
   </style>
 </head>
 <body>
-  <a href="/">Home</a>
-  |
+  {% include 'header.html' %}
   <a href="/hours">All Dining Hall Hours</a>
   {% for html in halls_html %}
     {{ html | safe }}
