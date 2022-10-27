@@ -255,6 +255,9 @@ def fullcrawl(print_output = None):
 
         halls = []
         for hall in HALLS:
+            if print_output:
+                print(hall['name'])
+
             h = gethall(hall, date)
             if h:
                 halls += [h]
