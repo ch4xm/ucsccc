@@ -12,6 +12,7 @@ from flask import abort
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
+from flask import send_from_directory
 from pytz import timezone
 
 CURL_CACHING = False
@@ -297,6 +298,10 @@ def hours(key = None):
     halls = re.findall(f'(?s)<div id="(?:{key})".*?<p class="footnote">.*?</p>', html)
 
     return render('hours.html', halls_html = halls)
+
+@ucsc.route('/favicon.ico')
+def favicon():
+    return send_from_directory(ucsc.root_path, 'slug.png')
 
 def main():
     try:
