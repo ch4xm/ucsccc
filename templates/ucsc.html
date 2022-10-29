@@ -24,7 +24,11 @@
       color: black;
     }
 
-    .unmark {
+    .nodec {
+      text-decoration: none;
+    }
+
+    .mark {
       text-decoration: none;
       border: 0.5px solid blue;
       font-size: 0.6rem;
@@ -65,6 +69,15 @@
     }
     .meal-item {
       width: 90px;
+    }
+    .diet-item {
+      width: 90px;
+    }
+
+    ul.legend {
+      padding: 0;
+      margin: 0;
+      list-style: none;
     }
 
     #scrollbox-container {
@@ -192,15 +205,30 @@
     <ul class="filter">
       {% for m in all_meals %}
         <li class="meal-item">
-          <input type="checkbox" checked="1" class="r-filter meal-item-checkbox" id="{{ meals_lookup[m] }}" value="1">
-          <label for="{{ meals_lookup[m] }}">{{ m }}</label>
+          <input type="checkbox" checked="1" class="r-filter meal-item-checkbox" id="meal-{{ meals_lookup[m] }}" value="1">
+          <label for="meal-{{ meals_lookup[m] }}">{{ m }}</label>
         </li>
       {% endfor %}
     </ul>
   </div>
 
+  <!-- <div class="p">
+    Filter Diet:
+    <a href="#" onclick="return checkBoxes('diet-item-checkbox', 1);">check all</a>
+    |
+    <a href="#" onclick="return checkBoxes('diet-item-checkbox', 0);">uncheck all</a>
+    <ul class="filter">
+      {% for key in legend %}
+        <li class="diet-item">
+          <input type="checkbox" checked="1" class="r-filter diet-item-checkbox" id="diet-{{ key }}" value="1">
+          <label for="diet-{{ key }}">{{ legend[key] }} {{ key[0] | upper + key[1:] }}</label>
+         </li>
+      {% endfor %}
+    </ul>
+  </div> -->
+
   <div class="p">
-    ❌ Ignored Foods: <span id="ignored-count"></span>
+    Ignored Foods: <span id="ignored-count"></span>
     <a href="#" onclick="return toggle('ignored-foods', 1);" id="ignored-foods-show">show</a>
     <a href="#" onclick="return toggle('ignored-foods', 0);" id="ignored-foods-hide" style="display: none;">hide</a>
     <ul id="ignored-foods">
@@ -208,7 +236,7 @@
   </div>
 
   <div class="p">
-    👍 <span class="favorite">Favorite</span> Foods: <span id="favorite-count"></span>
+    <span class="favorite">Favorite</span> Foods: <span id="favorite-count"></span>
     <a href="#" onclick="return toggle('favorite-foods', 1);" id="favorite-foods-show">show</a>
     <a href="#" onclick="return toggle('favorite-foods', 0);" id="favorite-foods-hide" style="display: none;">hide</a>
     <ul id="favorite-foods">
@@ -247,7 +275,7 @@
                   <a class="hours-url" href="{{ hall.hours_url }}">Hours</a>
                   <ul class="inner">
                     {% for meal in hall.meals %}
-                      <li class="r-meal" data-checkbox="{{ meals_lookup[meal.meal] }}">
+                      <li class="r-meal" data-checkbox="meal-{{ meals_lookup[meal.meal] }}">
                         <label data-orig="{{ meal.meal }}">{{ meal.meal }}</label>
                         <ul class="inner">
                           {% for cat in meal.cats %}
@@ -259,11 +287,23 @@
                                     data-hall="{{ hall.name }}"
                                     data-meal="{{ meal.meal }}"
                                     data-cat="{{ cat.cat }}"
-                                    data-food="{{ food }}"
+                                    data-food="{{ food.name }}"
+                                    {% for key in food.legend %}
+                                      data-diet-{{ key }}="1"
+                                    {% endfor %}
                                   >
-                                    <a href="#" onclick='return markFood({{ jsonify(food) }}, "skipped_foods");' style="text-decoration: none;" title="Hide">❌</a>
-                                    <label data-orig="{{ food }}">{{ food }}</label>
-                                    <a href="#" onclick='return markFood({{ jsonify(food) }}, "favorite_foods");' style="text-decoration: none;" title="Favorite">👍</a>
+                                    <span id="food-{{ food.idx }}-show">
+                                      <a href="#" onclick='return toggle("food-{{ food.idx }}", 1);' class="nodec">➕</a>
+                                    </span>
+                                    <span id="food-{{ food.idx }}-hide" style="display: none;">
+                                      <a href="#" onclick='return toggle("food-{{ food.idx }}", 0);' class="nodec">➖</a>
+                                      <a href="#" onclick='return markFood({{ jsonify(food.name) }}, "skipped_foods");' class="mark">hide</a>
+                                      <a href="#" onclick='return markFood({{ jsonify(food.name) }}, "favorite_foods");' class="mark fav-link">favorite</a>
+                                    </span>
+                                    <label data-orig="{{ food.name }}">{{ food.name }}</label>
+                                    {% for key in food.legend %}
+                                      {{ legend[key] or '❓<small>(' | safe + key + ')</small>' | safe }}
+                                    {% endfor %}
                                   </li>
                                 {% endfor %}
                               </ul>
@@ -285,6 +325,16 @@
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
 <script>
+  var showDiet = function(el) {
+    return 1;
+    {% for key in legend %}
+      var val = $(el).data('diet-{{ key }}');
+      var box = $('#diet-{{ key }}').prop('checked');
+      if (!box && val) { return 0; }
+    {% endfor %}
+    return 1;
+  };
+
   var updateSearch = function(foo) {
     var s = $('#r-search').val();
     localStorage.setItem('search', s || '');
@@ -310,14 +360,17 @@
         $(el).data('food');
       if (skipped[$(el).data('food')] ||
         (s.length > 0 && !name.match(new RegExp(s, 'i'))) ||
-        (favs_only && !favs[$(el).data('food')])
+        (favs_only && !favs[$(el).data('food')]) ||
+        !showDiet(el)
       ) {
         $(el).hide();
       } else {
         if (favs[$(el).data('food')]) {
           $(el).children('label').addClass('favorite');
+          $(el).find('.fav-link').hide();
         } else {
           $(el).children('label').removeClass('favorite');
+          $(el).find('.fav-link').show();
         }
 
         var orig = $(el).children('label').data('orig');
@@ -444,6 +497,15 @@
     var marked = JSON.parse(localStorage.getItem(key) || "{}");
     marked[f] = 1;
     localStorage.setItem(key, JSON.stringify(marked));
+
+    if (key == 'skipped_foods') {
+      var favs = JSON.parse(localStorage.getItem('favorite_foods') || "{}");
+      if (favs[f]) {
+        delete(favs[f]);
+        localStorage.setItem('favorite_foods', JSON.stringify(favs));
+      }
+    }
+
     updateSearch();
     return false;
   };
@@ -468,7 +530,7 @@
 
     var html = '';
     skip.forEach(function(food, i) {
-      html += '<li><a href="#" onclick=\'return unmarkFood("skipped_foods", ' + i + ');\' class="unmark">show</a> ' + food + '</li>';
+      html += '<li><a href="#" onclick=\'return unmarkFood("skipped_foods", ' + i + ');\' class="mark">show</a> ' + food + '</li>';
     });
     $('#ignored-foods').html(html);
 
@@ -477,7 +539,7 @@
 
     var html = '';
     favs.forEach(function(food, i) {
-      html += '<li><a href="#" onclick=\'return unmarkFood("favorite_foods", ' + i + ');\' class="unmark">unfavorite</a> ' + food + '</li>';
+      html += '<li><a href="#" onclick=\'return unmarkFood("favorite_foods", ' + i + ');\' class="mark">unfavorite</a> ' + food + '</li>';
     });
     $('#favorite-foods').html(html);
   };

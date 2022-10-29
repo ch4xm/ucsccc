@@ -40,6 +40,25 @@ HALLS = [{
     'hours_url': '/hours/crown-merrill',
 }]
 
+LEGEND = {
+    'alcohol': '🍷',
+    'beef': '🐄',
+    'eggs': '🥚',
+    'fish': '🐟',
+    'gluten': '🍞',
+    'halal': '🤲',
+    'milk': '🥛',
+    'nuts': '🥜',
+    'pork': '🐖',
+    'sesame': '🟤',
+    'shellfish': '🦀',
+    'soy': '🟢',
+    'treenut': '🌳',
+    'vegan': '🌱',
+    'veggie': '🥦',
+    'unknown': '❓',
+}
+
 def render(template, **params):
     html = render_template(template, **params)
 
@@ -104,6 +123,7 @@ def getmeals(code, date):
     output = curly(url, code, date_formatted)
 
     struct = []
+    i = 0
 
     for l in output.split('\n'):
         l = l.replace('&nbsp;', ' ')
@@ -126,7 +146,16 @@ def getmeals(code, date):
                 }]
 
             elif level == 'recipes':
-                struct[-1]['cats'][-1]['foods'] += [food]
+                struct[-1]['cats'][-1]['foods'] += [{
+                    'name': food,
+                    'legend': {},
+                    'idx': f'{date}-{code}-{i}',
+                }]
+                i += 1
+
+        m = re.search('LegendImages/([^\.]+)', l)
+        if m:
+            struct[-1]['cats'][-1]['foods'][-1]['legend'][m.group(1)] = 1
 
     new_struct = []
     for meal in struct:
@@ -134,6 +163,9 @@ def getmeals(code, date):
             new_cats = []
             for cat in meal['cats']:
                 if len(cat['foods']) > 0:
+                    for f in cat['foods']:
+                        if len(f['legend']) == 0:
+                            f['legend'] = {'unknown': 1}
                     new_cats.append(cat)
 
             if len(new_cats) > 0:
@@ -196,7 +228,7 @@ def get_all_meals(calendar):
     meals_lookup = {}
     i = 0
     for m in all_meals:
-        meals_lookup[m] = f'meal-{i}'
+        meals_lookup[m] = i
         i += 1
 
     return (all_meals, meals_lookup)
@@ -220,6 +252,7 @@ def ucscRoute():
             all_meals = all_meals,
             meals_lookup = meals_lookup,
             halls = HALLS,
+            legend = LEGEND,
             cache_time = cache['time'],
             strftime = strftime,
             jsonify = jsonify,
