@@ -323,6 +323,17 @@
   </div>
 </div>
 
+<div class="p">
+  Legend:
+  <ul class="filter">
+    {% for key in legend %}
+      <li class="diet-item">
+        {{ legend[key] }} {{ key[0] | upper + key[1:] }}
+       </li>
+    {% endfor %}
+  </ul>
+</div>
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
 <script>
   var showDiet = function(el) {
