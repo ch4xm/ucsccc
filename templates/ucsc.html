@@ -160,6 +160,18 @@
 
 <div class="p" id="filters-show">
   <a href="#" onclick="return toggle('filters', 1);">Show Filters</a>
+
+  <div class="p">
+    <ul class="filter">
+      <li class="filter-item" id="dates-summary"></li>
+      <li class="filter-item" id="halls-summary"></li>
+      <li class="filter-item" id="meals-summary"></li>
+      <li class="filter-item" id="ignored-summary"></li>
+      <li class="filter-item" id="favorites-summary"></li>
+      <li class="filter-item" id="favorites-only-summary">• Only show favorites</li>
+      <li class="filter-item" id="search-summary"></li>
+    </ul>
+  </div>
 </div>
 
 <div id="filters-hide" style="display: none;">
@@ -212,25 +224,11 @@
     </ul>
   </div>
 
-  <!-- <div class="p">
-    Filter Diet:
-    <a href="#" onclick="return checkBoxes('diet-item-checkbox', 1);">check all</a>
-    |
-    <a href="#" onclick="return checkBoxes('diet-item-checkbox', 0);">uncheck all</a>
-    <ul class="filter">
-      {% for key in legend %}
-        <li class="diet-item">
-          <input type="checkbox" checked="1" class="r-filter diet-item-checkbox" id="diet-{{ key }}" value="1">
-          <label for="diet-{{ key }}">{{ legend[key] }} {{ key[0] | upper + key[1:] }}</label>
-         </li>
-      {% endfor %}
-    </ul>
-  </div> -->
-
   <div class="p">
     Ignored Foods: <span id="ignored-count"></span>
     <a href="#" onclick="return toggle('ignored-foods', 1);" id="ignored-foods-show">show</a>
     <a href="#" onclick="return toggle('ignored-foods', 0);" id="ignored-foods-hide" style="display: none;">hide</a>
+    <a href="#" onclick="return resetMarks('skipped_foods');">clear all</a>
     <ul id="ignored-foods">
     </ul>
   </div>
@@ -239,12 +237,13 @@
     <span class="favorite">Favorite</span> Foods: <span id="favorite-count"></span>
     <a href="#" onclick="return toggle('favorite-foods', 1);" id="favorite-foods-show">show</a>
     <a href="#" onclick="return toggle('favorite-foods', 0);" id="favorite-foods-hide" style="display: none;">hide</a>
+    <a href="#" onclick="return resetMarks('favorite_foods');">clear all</a>
     <ul id="favorite-foods">
     </ul>
   </div>
 
   <div class="p">
-    <input type="checkbox" value="1" class="r-filter" id="favorites-only"><label for="favorites-only">Only display favorite foods</label>
+    <input type="checkbox" value="1" class="r-filter" id="favorites-only"><label for="favorites-only">Only show favorite foods</label>
   </div>
 
   <div class="p">
@@ -324,11 +323,22 @@
 </div>
 
 <div class="p">
-  Legend:
+  Hide all:
   <ul class="filter">
     {% for key in legend %}
       <li class="diet-item">
-        {{ legend[key] }} {{ key[0] | upper + key[1:] }}
+        <a href="#" onclick="return markAll('{{ key }}', 'skipped_foods');" class="nodec">{{ legend[key] }} {{ key[0] | upper + key[1:] }}</a>
+       </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="p">
+  Favorite all:
+  <ul class="filter">
+    {% for key in legend %}
+      <li class="diet-item">
+        <a href="#" onclick="return markAll('{{ key }}', 'favorite_foods');" class="nodec">{{ legend[key] }} {{ key[0] | upper + key[1:] }}</a>
        </li>
     {% endfor %}
   </ul>
@@ -336,17 +346,64 @@
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
 <script>
-  var showDiet = function(el) {
-    return 1;
-    {% for key in legend %}
-      var val = $(el).data('diet-{{ key }}');
-      var box = $('#diet-{{ key }}').prop('checked');
-      if (!box && val) { return 0; }
-    {% endfor %}
-    return 1;
+  var updateFromCheckboxes = function(type, id, text, prefix) {
+    var total = 0;
+    var checked = 0;
+    $('.' + type + '-item-checkbox').each(function() {
+      total++;
+      checked += this.checked ? 1 : 0;
+    });
+    if (checked < total) {
+      $('#' + id).html(prefix + checked + '/' + total + ' ' + text);
+      $('#' + id).show();
+    } else {
+      $('#' + id).html('');
+      $('#' + id).hide();
+    }
   };
 
-  var updateSearch = function(foo) {
+  var updateSummary = function() {
+    updateFromCheckboxes('date', 'dates-summary', 'Dates', '');
+    updateFromCheckboxes('hall', 'halls-summary', 'Dining Halls', '• ');
+    updateFromCheckboxes('meal', 'meals-summary', 'Meals', '• ');
+
+    var ignored = markedList('skipped_foods').length;
+    if (ignored > 0) {
+      $('#ignored-summary').html('• Ignored Foods: ' + ignored);
+      $('#ignored-summary').show();
+    } else {
+      $('#ignored-summary').html('');
+      $('#ignored-summary').hide();
+    }
+
+    var favs = markedList('favorite_foods').length;
+    if (favs > 0) {
+      $('#favorites-summary').html('• Favorite Foods: ' + favs);
+      $('#favorites-summary').show();
+    } else {
+      $('#favorites-summary').html('');
+      $('#favorites-summary').hide();
+    }
+
+    var favs_only = $('#favorites-only').prop('checked');
+    if (favs_only) {
+      $('#favorites-only-summary').show();
+    } else {
+      $('#favorites-only-summary').hide();
+    }
+
+    var s = $('#r-search').val();
+    if (s.length > 0) {
+      $('#search-summary').html('• Contains "' + s + '"');
+      $('#search-summary').show();
+    } else {
+      $('#search-summary').html('');
+      $('#search-summary').hide();
+    }
+
+  };
+
+  var updateSearch = function() {
     var s = $('#r-search').val();
     localStorage.setItem('search', s || '');
 
@@ -371,8 +428,7 @@
         $(el).data('food');
       if (skipped[$(el).data('food')] ||
         (s.length > 0 && !name.match(new RegExp(s, 'i'))) ||
-        (favs_only && !favs[$(el).data('food')]) ||
-        !showDiet(el)
+        (favs_only && !favs[$(el).data('food')])
       ) {
         $(el).hide();
       } else {
@@ -495,6 +551,7 @@
     });
 
     updateMarked();
+    updateSummary();
     scrolling();
   };
 
@@ -504,19 +561,26 @@
     return false;
   };
 
-  var markFood = function(f, key) {
+  var resetMarks = function(key) {
+    localStorage.setItem(key, "{}");
+    updateSearch();
+  };
+
+  var updateLocalMarks = function(f, key) {
     var marked = JSON.parse(localStorage.getItem(key) || "{}");
     marked[f] = 1;
     localStorage.setItem(key, JSON.stringify(marked));
 
-    if (key == 'skipped_foods') {
-      var favs = JSON.parse(localStorage.getItem('favorite_foods') || "{}");
-      if (favs[f]) {
-        delete(favs[f]);
-        localStorage.setItem('favorite_foods', JSON.stringify(favs));
-      }
+    var other_set = key == 'skipped_foods' ? 'favorite_foods' : 'skipped_foods';
+    var other = JSON.parse(localStorage.getItem(other_set) || "{}");
+    if (other[f]) {
+      delete(other[f]);
+      localStorage.setItem(other_set, JSON.stringify(other));
     }
+  };
 
+  var markFood = function(f, key) {
+    updateLocalMarks(f, key);
     updateSearch();
     return false;
   };
@@ -589,6 +653,18 @@
   var forceScroll = function() {
     var fadePixels = $('#scrollbox')[0].clientWidth / 2;
     $('#scrollbox').animate({scrollLeft: fadePixels}, 500);
+  };
+
+  var markAll = function(diet, key) {
+    $('.r-food').each(function(i, el) {
+      var data_diet = $(el).data('diet-' + diet);
+      var food = $(el).data('food');
+      if (data_diet) {
+        updateLocalMarks(food, key);
+      }
+    });
+    updateSearch();
+    return false;
   };
 
   $(document).ready(function() {
