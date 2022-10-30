@@ -21,23 +21,19 @@ CACHE_AGE = 120
 HALLS = [{
     'name': 'College Nine/John R Lewis',
     'code': '40',
-    'bgcolor': 'lightcyan',
     'hours_url': '/hours/college-nine-john-r-lewis',
-}, {
-    'name': 'Porter/Kresge',
-    'code': '25',
-    'bgcolor': 'papayawhip',
-    'hours_url': '/hours/porter-kresge',
 }, {
     'name': 'Cowell/Stevenson',
     'code': '05',
-    'bgcolor': 'lavenderblush',
     'hours_url': '/hours/cowell-stevenson',
 }, {
     'name': 'Crown/Merrill',
     'code': '20',
-    'bgcolor': 'beige',
     'hours_url': '/hours/crown-merrill',
+}, {
+    'name': 'Porter/Kresge',
+    'code': '25',
+    'hours_url': '/hours/porter-kresge',
 }]
 
 LEGEND = {
@@ -182,7 +178,6 @@ def gethall(hall, date):
         return {
             'name': hall['name'],
             'code': hall['code'],
-            'bgcolor': hall['bgcolor'],
             'hours_url': hall['hours_url'],
             'meals': meals,
         }

@@ -51,6 +51,15 @@
       margin-bottom: 1rem;
     }
 
+    .ordered {
+      display: flex;
+      flex-direction: column;
+    }
+    .hall-order-40 { background-color: #E7FFFF; }
+    .hall-order-05 { background-color: #FFE7E7; }
+    .hall-order-20 { background-color: #E7FFE7; }
+    .hall-order-25 { background-color: #E7E7FF; }
+
     ul.filter {
       padding: 0;
       margin: 0;
@@ -65,7 +74,7 @@
       width: 110px;
     }
     .hall-item {
-      width: 185px;
+      width: 225px;
     }
     .meal-item {
       width: 90px;
@@ -160,6 +169,7 @@
 
 <div class="p" id="filters-show">
   <a href="#" onclick="return toggle('filters', 1);">Show Filters</a>
+  <a href="/" onclick="localStorage.clear();" class="mark">reset all filters</a>
 
   <div class="p">
     <ul class="filter">
@@ -177,6 +187,7 @@
 <div id="filters-hide" style="display: none;">
   <div class="p">
     <a href="#" onclick="return toggle('filters', 0);">Hide Filters</a>
+    <a href="/" onclick="localStorage.clear();" class="mark">reset all filters</a>
   </div>
 
   <div class="p">
@@ -195,13 +206,15 @@
   </div>
 
   <div class="p">
-    Filter Dining Halls:
+    Filter/Reorder Dining Halls:
     <a href="#" onclick="return checkBoxes('hall-item-checkbox', 1);">check all</a>
     |
     <a href="#" onclick="return checkBoxes('hall-item-checkbox', 0);">uncheck all</a>
-    <ul class="filter">
+    <ul class="filter ordered">
       {% for hall in halls %}
-        <li class="hall-item" style="background-color: {{ hall.bgcolor }};">
+        <li class="hall-item hall-order-{{ hall.code }}" data-code="{{ hall.code }}">
+          <a href="#" id="down-{{ hall.code }}" onclick="return changeOrder('{{ hall.code}}', 1)" class="nodec">▼</a>
+          <a href="#" id="up-{{ hall.code }}" onclick="return changeOrder('{{ hall.code}}', -1)" class="nodec">▲</a>
           <input type="checkbox" checked="1" class="r-filter hall-item-checkbox" id="hall-{{ hall.code }}" value="1">
           <label for="hall-{{ hall.code }}">{{ hall.name }}</label>
         </li>
@@ -228,7 +241,7 @@
     Ignored Foods: <span id="ignored-count"></span>
     <a href="#" onclick="return toggle('ignored-foods', 1);" id="ignored-foods-show">show</a>
     <a href="#" onclick="return toggle('ignored-foods', 0);" id="ignored-foods-hide" style="display: none;">hide</a>
-    <a href="#" onclick="return resetMarks('skipped_foods');">clear all</a>
+    <a href="#" onclick="return resetMarks('skipped_foods');" class="mark">clear all</a>
     <ul id="ignored-foods">
     </ul>
   </div>
@@ -237,7 +250,7 @@
     <span class="favorite">Favorite</span> Foods: <span id="favorite-count"></span>
     <a href="#" onclick="return toggle('favorite-foods', 1);" id="favorite-foods-show">show</a>
     <a href="#" onclick="return toggle('favorite-foods', 0);" id="favorite-foods-hide" style="display: none;">hide</a>
-    <a href="#" onclick="return resetMarks('favorite_foods');">clear all</a>
+    <a href="#" onclick="return resetMarks('favorite_foods');" class="mark">clear all</a>
     <ul id="favorite-foods">
     </ul>
   </div>
@@ -265,9 +278,9 @@
             <label data-orig="{{ strftime(date.date, '%a, %b %-d') }}">
               {{ strftime(date.date, '%a, %b %-d') }}
             </label>
-            <ul class="inner">
+            <ul class="inner ordered">
               {% for hall in date.halls %}
-                <li class="r-hall" data-checkbox="hall-{{ hall.code }}" style="background-color: {{ hall.bgcolor }};">
+                <li class="r-hall hall-order-{{ hall.code }}" data-checkbox="hall-{{ hall.code }}">
                   <label data-orig="{{ hall.name }}">
                     {{ hall.name }}
                   </label>
@@ -667,6 +680,66 @@
     return false;
   };
 
+  var styleOrder = function(order) {
+    var minKey;
+    var minVal = Object.keys(order).length + 1;
+    var maxKey;
+    var maxVal = 0;
+    Object.keys(order).forEach(function(key) {
+      if (order[key] < minVal) {
+        minVal = order[key];
+        minKey = key;
+      }
+      if (order[key] > maxVal) {
+        maxVal = order[key];
+        maxKey = key;
+      }
+      $('.hall-order-' + key).css({order: order[key]});
+      $('#up-' + key).css({visibility: 'visible'});
+      $('#down-' + key).css({visibility: 'visible'});
+    });
+    $('#up-' + minKey).css({visibility: 'hidden'});
+    $('#down-' + maxKey).css({visibility: 'hidden'});
+  };
+
+  var changeOrder = function(code, dir) {
+    var order = JSON.parse(localStorage.getItem('hall_order') || "{}");
+    var oldOrder = order[code];
+    var newOrder = oldOrder + dir;
+
+    Object.keys(order).forEach(function(key) {
+      if (order[key] == newOrder) {
+        order[key] = oldOrder;
+      }
+    });
+
+    order[code] = newOrder;
+
+    styleOrder(order);
+    localStorage.setItem('hall_order', JSON.stringify(order));
+
+    return false;
+  };
+
+  var setupOrder = function() {
+    var order = JSON.parse(localStorage.getItem('hall_order') || "{}");
+    var i = 1;
+    var changed = 0;
+    $('.hall-item').each(function() {
+      var code = $(this).data('code');
+      if (!order[code]) {
+        changed++;
+        order[code] = i;
+      }
+      i++;
+    });
+    if (changed) {
+      localStorage.setItem('hall_order', JSON.stringify(order));
+    }
+
+    styleOrder(order);
+  };
+
   $(document).ready(function() {
     $('#r-search').val(localStorage.getItem('search') || '');
 
@@ -683,6 +756,8 @@
     $('.r-filter').on('change', updateSearch);
     $('#scrollbox').on('scroll', scrolling);
     $('#scrollbox-arrow').on('click', forceScroll);
+
+    setupOrder();
     updateSearch();
     $('body').show();
     scrolling();
