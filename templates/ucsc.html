@@ -6,7 +6,9 @@
   <style>
     body {
       font-family: arial, san-serif;
+      {% if not error %}
       display: none;
+      {% endif %}
     }
 
     a:visited {
@@ -169,7 +171,7 @@
 
 <div class="p" id="filters-show">
   <a href="#" onclick="return toggle('filters', 1);">Show Filters</a>
-  <a href="/" onclick="localStorage.clear();" class="mark">reset all filters</a>
+  <a href="/" onclick="return resetAll();" class="mark">reset all filters</a>
 
   <div class="p">
     <ul class="filter">
@@ -187,7 +189,7 @@
 <div id="filters-hide" style="display: none;">
   <div class="p">
     <a href="#" onclick="return toggle('filters', 0);">Hide Filters</a>
-    <a href="/" onclick="localStorage.clear();" class="mark">reset all filters</a>
+    <a href="/" onclick="return resetAll();" class="mark">reset all filters</a>
   </div>
 
   <div class="p">
@@ -575,8 +577,11 @@
   };
 
   var resetMarks = function(key) {
-    localStorage.setItem(key, "{}");
-    updateSearch();
+    if (confirm('Are you sure?')) {
+      localStorage.setItem(key, "{}");
+      updateSearch();
+    }
+    return false;
   };
 
   var updateLocalMarks = function(f, key) {
@@ -738,6 +743,14 @@
     }
 
     styleOrder(order);
+  };
+
+  var resetAll = function() {
+    if (confirm('Are you sure?')) {
+      localStorage.clear();
+      return true;
+    }
+    return false;
   };
 
   $(document).ready(function() {
