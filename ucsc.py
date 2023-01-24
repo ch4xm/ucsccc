@@ -3,7 +3,6 @@ import json
 import os
 import re
 import requests
-import subprocess
 import time
 import traceback
 
@@ -12,6 +11,7 @@ from flask import abort
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
+from flask import Response
 from flask import send_from_directory
 from pytz import timezone
 
@@ -252,6 +252,37 @@ def ucscRoute():
             strftime = strftime,
             jsonify = jsonify,
             cache_age = cache_age,
+        )
+
+    except BaseException as e:
+        error = repr(e) + '\n\n'
+        error += traceback.format_exc()
+        return render('ucsc.html', error = error)
+
+class Encoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
+            return obj.isoformat()
+        return json.JSONEncoder.default(self, obj)
+
+def jdump(obj):
+    return json.dumps(obj, cls = Encoder)
+
+@ucsc.route('/api', methods = ['GET'])
+def ucscJSONRoute():
+    try:
+        cache = getcache()
+        calendar = []
+        for date in sorted(list(cache['dates'])):
+            calendar.append({
+                'date': datetime.datetime.strptime(date, '%Y-%m-%d'),
+                'halls': cache['dates'][date]['halls'],
+            })
+
+        return Response(
+            response = jdump(calendar),
+            status = 200,
+            mimetype = 'application/json'
         )
 
     except BaseException as e:
