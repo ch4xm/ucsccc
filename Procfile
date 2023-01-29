@@ -1,1 +1,1 @@
-web: gunicorn --workers=4 app:app
+web: gunicorn --workers=4 --max-requests 20 app:app
