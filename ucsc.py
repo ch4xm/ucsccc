@@ -34,6 +34,10 @@ HALLS = [{
     'name': 'Porter/Kresge',
     'code': '25',
     'hours_url': '/hours/porter-kresge',
+}, {
+    'name': 'Carson/Oakes',
+    'code': '30',
+    'hours_url': '/hours/carson-oakes',
 }]
 
 LEGEND = {
@@ -316,7 +320,7 @@ def fullcrawl(print_output = None):
         halls = []
         for hall in HALLS:
             if print_output:
-                print(hall['name'])
+                print(f'  {hall["name"]}')
 
             h = gethall(hall, date)
             if h:
