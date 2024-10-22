@@ -309,6 +309,7 @@ def fullcrawl(print_output = None):
     cache = {
         'dates': {}
     }
+    print('Running fullcrawl in background thread...')
 
     today = datetime.datetime.now().astimezone(timezone('US/Pacific')).date()
     for i in range(0, 8):
@@ -336,17 +337,18 @@ def fullcrawl(print_output = None):
     return redirect('/')
 
 HOURS_LOOKUP = {
-    'college-nine-john-r-lewis': 'nineten',
+    'college-nine-john-r-lewis': 'ninelewis',
     'porter-kresge': 'porterdh',
     'cowell-stevenson': 'csdh',
     'crown-merrill': 'cmdh',
+    'carson-oakes': 'rodh'
 }
 
 @ucsc.route('/hours', methods = ['GET'])
 @ucsc.route('/hours/<key>', methods = ['GET'])
 def hours(key = None):
     if not key:
-        key = 'nineten|porterdh|cmdh|csdh'
+        key = 'ninelewis|porterdh|cmdh|csdh|rodh'
     elif key not in HOURS_LOOKUP:
         return abort(404)
     else:
@@ -367,7 +369,6 @@ def favicon():
     return send_from_directory(ucsc.root_path, 'slug.png')
 
 def main():
-    print('Running fullcrawl in background thread...')
     try:
         fullcrawl('PRINT_OUTPUT')
 
