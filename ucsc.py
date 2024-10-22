@@ -367,6 +367,7 @@ def favicon():
     return send_from_directory(ucsc.root_path, 'slug.png')
 
 def main():
+    print('Running fullcrawl in background thread...')
     try:
         fullcrawl('PRINT_OUTPUT')
 
