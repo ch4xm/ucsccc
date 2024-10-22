@@ -55,7 +55,7 @@
 
     .ordered {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
     }
     .hall-order-40 { background-color: #E7FFFF; }
     .hall-order-05 { background-color: #FFE7E7; }
@@ -275,8 +275,8 @@
   </div>
   <div id="scrollbox">
     <table id="tree">
-      <tr>
-        {% for date in calendar %}
+      {% for date in calendar %}
+        <tr>
           <td valign="top" nowrap="1" cellpadding="0" cellspacing="0" class="r-date" data-checkbox="date-{{ strftime(date.date, '%Y%m%d') }}">
             <label data-orig="{{ strftime(date.date, '%a, %b %-d') }}">
               {{ strftime(date.date, '%a, %b %-d') }}
@@ -332,8 +332,8 @@
               {% endfor %}
             </ul>
           </td>
-        {% endfor %}
-      </tr>
+        </tr>
+      {% endfor %}
     </table>
   </div>
 </div>
