@@ -16,7 +16,7 @@ from flask import send_from_directory
 from pytz import timezone
 
 CURL_CACHING = False
-CACHE_AGE = 60 * 60
+CACHE_AGE = 60 * 60 * 24
 
 HALLS = [{
     'name': 'College Nine/John R Lewis',
@@ -238,9 +238,15 @@ def ucscRoute():
     try:
         cache = getcache()
         calendar = []
+        today = datetime.datetime.today()
+
         for date in sorted(list(cache['dates'])):
+            date_obj = datetime.datetime.strptime(date, '%Y-%m-%d')
+            if date_obj < today:    # If cache contains older days, then skip til today's date
+                continue
+
             calendar.append({
-                'date': datetime.datetime.strptime(date, '%Y-%m-%d'),
+                'date': date_obj,
                 'halls': cache['dates'][date]['halls'],
             })
 
@@ -332,6 +338,7 @@ def fullcrawl(print_output = None):
         }
 
     cache['time'] = time.time()
+    print(json.dumps(cache))
     ucsc_halls_json(json.dumps(cache))
 
     return redirect('/')
