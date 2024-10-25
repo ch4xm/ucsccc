@@ -238,8 +238,7 @@ def ucscRoute():
     try:
         cache = getcache()
         calendar = []
-        today = datetime.datetime.today()
-
+        today = datetime.datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
         for date in sorted(list(cache['dates'])):
             date_obj = datetime.datetime.strptime(date, '%Y-%m-%d')
             if date_obj < today:    # If cache contains older days, then skip til today's date
@@ -303,8 +302,11 @@ def ucscJSONRoute():
 @ucsc.route('/fullcrawl', methods = ['GET'])
 def fullcrawl(print_output = None):
     cache = getcache()
-    if requests.head('https://nutrition.sa.ucsc.edu').status_code != requests.codes['ok']:
-        return redirect('/')    # If unable to access site just fallback to cache and hope something exists in it
+    try:
+        if requests.head('https://nutrition.sa.ucsc.edu', timeout=15).status_code != requests.codes['ok']:
+            return redirect('/')    # If unable to access site just fallback to cache and hope something exists in it
+    except Exception as e:
+        return redirect('/')
     age = cache.get('time') or 0
     age = time.time() - age
     if age < CACHE_AGE:
