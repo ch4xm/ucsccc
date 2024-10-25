@@ -303,7 +303,8 @@ def ucscJSONRoute():
 @ucsc.route('/fullcrawl', methods = ['GET'])
 def fullcrawl(print_output = None):
     cache = getcache()
-
+    if requests.head('https://nutrition.sa.ucsc.edu').status_code != requests.codes['ok']:
+        return redirect('/')    # If unable to access site just fallback to cache and hope something exists in it
     age = cache.get('time') or 0
     age = time.time() - age
     if age < CACHE_AGE:
