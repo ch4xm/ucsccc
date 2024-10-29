@@ -304,6 +304,7 @@ def fullcrawl(print_output = None):
     cache = getcache()
     try:
         if requests.head('https://nutrition.sa.ucsc.edu', timeout=15).status_code != requests.codes['ok']:
+            print("Unable to access nutrition website! Falling back to cache...")
             return redirect('/')    # If unable to access site just fallback to cache and hope something exists in it
     except Exception as e:
         return redirect('/')
@@ -323,6 +324,7 @@ def fullcrawl(print_output = None):
     today = datetime.datetime.now().astimezone(timezone('US/Pacific')).date()
     for i in range(0, 8):
         date = today + datetime.timedelta(days = i)
+        print("date": date)
         date_key = date.strftime('%Y-%m-%d')
         if print_output:
             print(date_key)
