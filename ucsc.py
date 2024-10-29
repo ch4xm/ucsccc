@@ -324,7 +324,7 @@ def fullcrawl(print_output = None):
     today = datetime.datetime.now().astimezone(timezone('US/Pacific')).date()
     for i in range(0, 8):
         date = today + datetime.timedelta(days = i)
-        print("date": date)
+        print("date:", date)
         date_key = date.strftime('%Y-%m-%d')
         if print_output:
             print(date_key)
