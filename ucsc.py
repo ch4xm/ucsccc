@@ -16,7 +16,7 @@ from flask import send_from_directory
 from pytz import timezone
 
 CURL_CACHING = False
-CACHE_AGE = 60 * 60 * 24
+CACHE_AGE = 60
 
 HALLS = [{
     'name': 'College Nine/John R Lewis',
