@@ -6,6 +6,7 @@ import requests
 import time
 import traceback
 
+from threading import Thread
 from css_html_js_minify import html_minify
 from flask import abort
 from flask import Blueprint
@@ -16,7 +17,9 @@ from flask import send_from_directory
 from pytz import timezone
 
 CURL_CACHING = False
-CACHE_AGE = 60
+CACHE_AGE = 60    # Daily refresh
+
+scrape_thread = None
 
 HALLS = [{
     'name': 'College Nine/John R Lewis',
@@ -88,7 +91,10 @@ def strftime(date, format):
     return date.strftime(format)
 
 def curly(url, code, date):
-    file = f'/tmp/ucsc-output-{date}-{code}.html'
+    if not os.path.exists('tmp'):
+        os.makedirs('tmp')
+
+    file = f'tmp/ucsc-output-{date}-{code}.html'
 
     if not (CURL_CACHING and os.path.exists(file)):
         cookies = {
@@ -99,7 +105,7 @@ def curly(url, code, date):
             'WebInaCartQtys': '',
         }
 
-        response = requests.get(url, cookies = cookies)
+        response = requests.get(url, cookies = cookies, verify=False)
 
         f = open(file, 'wb')
         f.write(response.content)
@@ -189,14 +195,16 @@ def gethall(hall, date):
     return None
 
 def ucsc_halls_json(val = None):
+    if not os.path.exists('tmp'):
+            os.makedirs('tmp')
     if val:
-        f = open('/tmp/ucsc-cache.json', 'w')
+        f = open('tmp/ucsc-cache.json', 'w')
         f.write(val)
         f.close()
 
     else:
         try:
-            f = open('/tmp/ucsc-cache.json')
+            f = open('tmp/ucsc-cache.json')
             val = f.read()
             f.close()
         except:
@@ -238,7 +246,22 @@ def ucscRoute():
     try:
         cache = getcache()
         calendar = []
+
+        age = cache.get('time') or 0
+        age = time.time() - age
+        if age < CACHE_AGE:
+            print('Cache is fresh')
+        else:
+            print('Cache expired! Getting menu...')
+            if not scrape_thread.is_alive():
+                scrape_thread = Thread(target=scrape_menus, args=("PRINT_OUTPUT",), daemon=True)
+                scrape_thread.start()
+
         today = datetime.datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+
+        if 'dates' not in cache:
+            return Response('Error: Cache invalid! Wait a few seconds for it to refresh, and then reload the page.')
+        
         for date in sorted(list(cache['dates'])):
             date_obj = datetime.datetime.strptime(date, '%Y-%m-%d')
             if date_obj < today:    # If cache contains older days, then skip til today's date
@@ -302,29 +325,43 @@ def ucscJSONRoute():
 @ucsc.route('/fullcrawl', methods = ['GET'])
 def fullcrawl(print_output = None):
     cache = getcache()
-    try:
-        if requests.head('https://nutrition.sa.ucsc.edu', timeout=15).status_code != requests.codes['ok']:
-            print("Unable to access nutrition website! Falling back to cache...")
-            return redirect('/')    # If unable to access site just fallback to cache and hope something exists in it
-    except Exception as e:
-        return redirect('/')
+
+    # try:
+    #     print('res')
+
+    #     res = requests.get('https://nutrition.sa.ucsc.edu/shortmenu.aspx?sName=UC+Santa+Cruz+Dining&locationNum=40&locationName=John+R.+Lewis+%26+College+Nine+Dining+Hall&naFlag=1')
+    #     print('res', res)
+    #     if requests.get('https://nutrition.sa.ucsc.edu', timeout=15).status_code != requests.codes['ok']:
+    #         return redirect('/')    # If unable to access site just fallback to cache and hope something exists in it
+    # except Exception as e:
+    #     if print_output:
+    #         print("Unable to access nutrition website: " + str(e) + "\nFalling back to cache...")
+    #     return redirect('/')
+    
     age = cache.get('time') or 0
     age = time.time() - age
     if age < CACHE_AGE:
         if print_output:
             print('Cache is fresh')
-
         return redirect('/')
+    if print_output:
+        print('Cache expired! Getting menu...')
 
+
+    print('Running fullcrawl in background thread...')
+    scrape_thread = Thread(target=scrape_menus, args=(print_output,), daemon=True)
+    scrape_thread.start()
+
+    return redirect('/')
+
+def scrape_menus(print_output=None):
     cache = {
         'dates': {}
     }
-    print('Running fullcrawl in background thread...')
 
     today = datetime.datetime.now().astimezone(timezone('US/Pacific')).date()
     for i in range(0, 8):
         date = today + datetime.timedelta(days = i)
-        print("date:", date)
         date_key = date.strftime('%Y-%m-%d')
         if print_output:
             print(date_key)
@@ -345,8 +382,6 @@ def fullcrawl(print_output = None):
     cache['time'] = time.time()
     print(json.dumps(cache))
     ucsc_halls_json(json.dumps(cache))
-
-    return redirect('/')
 
 HOURS_LOOKUP = {
     'college-nine-john-r-lewis': 'ninelewis',
