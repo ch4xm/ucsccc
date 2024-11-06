@@ -17,9 +17,38 @@ from flask import send_from_directory
 from pytz import timezone
 
 CURL_CACHING = False
-CACHE_AGE = 60    # Daily refresh
+CACHE_AGE = 60 * 60 * 24    # Daily refresh
 
-scrape_thread = None
+def scrape_menus(print_output=None):
+    cache = {
+        'dates': {}
+    }
+
+    today = datetime.datetime.now().astimezone(timezone('US/Pacific')).date()
+    for i in range(0, 8):
+        date = today + datetime.timedelta(days = i)
+        date_key = date.strftime('%Y-%m-%d')
+        if print_output:
+            print(date_key)
+
+        halls = []
+        for hall in HALLS:
+            if print_output:
+                print(f'  {hall["name"]}')
+
+            h = gethall(hall, date)
+            if h:
+                halls += [h]
+
+        cache['dates'][date_key] = {
+            'halls': halls,
+        }
+
+    cache['time'] = time.time()
+    print(json.dumps(cache))
+    ucsc_halls_json(json.dumps(cache))
+
+scrape_thread = Thread(target=scrape_menus, args=('PRINT_OUTPUT',), daemon=True)
 
 HALLS = [{
     'name': 'College Nine/John R Lewis',
@@ -253,8 +282,8 @@ def ucscRoute():
             print('Cache is fresh')
         else:
             print('Cache expired! Getting menu...')
+            global scrape_thread
             if not scrape_thread.is_alive():
-                scrape_thread = Thread(target=scrape_menus, args=("PRINT_OUTPUT",), daemon=True)
                 scrape_thread.start()
 
         today = datetime.datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -348,40 +377,12 @@ def fullcrawl(print_output = None):
         print('Cache expired! Getting menu...')
 
 
+    global scrape_thread
     print('Running fullcrawl in background thread...')
-    scrape_thread = Thread(target=scrape_menus, args=(print_output,), daemon=True)
-    scrape_thread.start()
+    if not scrape_thread.is_alive():
+        scrape_thread.start()
 
     return redirect('/')
-
-def scrape_menus(print_output=None):
-    cache = {
-        'dates': {}
-    }
-
-    today = datetime.datetime.now().astimezone(timezone('US/Pacific')).date()
-    for i in range(0, 8):
-        date = today + datetime.timedelta(days = i)
-        date_key = date.strftime('%Y-%m-%d')
-        if print_output:
-            print(date_key)
-
-        halls = []
-        for hall in HALLS:
-            if print_output:
-                print(f'  {hall["name"]}')
-
-            h = gethall(hall, date)
-            if h:
-                halls += [h]
-
-        cache['dates'][date_key] = {
-            'halls': halls,
-        }
-
-    cache['time'] = time.time()
-    print(json.dumps(cache))
-    ucsc_halls_json(json.dumps(cache))
 
 HOURS_LOOKUP = {
     'college-nine-john-r-lewis': 'ninelewis',
