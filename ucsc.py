@@ -48,7 +48,7 @@ def scrape_menus(print_output=None):
     print(json.dumps(cache))
     ucsc_halls_json(json.dumps(cache))
 
-scrape_thread = Thread(target=scrape_menus, args=('PRINT_OUTPUT',), daemon=True)
+scrape_thread = None
 
 HALLS = [{
     'name': 'College Nine/John R Lewis',
@@ -283,7 +283,8 @@ def ucscRoute():
         else:
             print('Cache expired! Getting menu...')
             global scrape_thread
-            if not scrape_thread.is_alive():
+            if scrape_thread is None or not scrape_thread.is_alive():
+                scrape_thread = Thread(target=scrape_menus, args=('PRINT_OUTPUT',), daemon=True)
                 scrape_thread.start()
 
         today = datetime.datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -379,7 +380,8 @@ def fullcrawl(print_output = None):
 
     global scrape_thread
     print('Running fullcrawl in background thread...')
-    if not scrape_thread.is_alive():
+    if scrape_thread is None or not scrape_thread.is_alive():
+        scrape_thread = Thread(target=scrape_menus, args=(print_output,), daemon=True)
         scrape_thread.start()
 
     return redirect('/')
